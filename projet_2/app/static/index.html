@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinIO Cloud Storage</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338ca;
+            --bg-color: #F3F4F6;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-secondary: #6B7280;
+            --danger: #EF4444;
+            --success: #10B981;
+            --border: #E5E7EB;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Upload Section */
+        .upload-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            margin-bottom: 40px;
+            border: 2px dashed var(--border);
+            transition: border-color 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-card:hover,
+        .upload-card.dragover {
+            border-color: var(--primary);
+            background-color: #EEF2FF;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* File List Section */
+        .files-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .files-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .file-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #EEF2FF;
+            color: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+
+        .file-details {
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        .file-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .btn-download {
+            background-color: #EEF2FF;
+            color: var(--primary);
+        }
+
+        .btn-download:hover {
+            background-color: #E0E7FF;
+        }
+
+        .btn-delete {
+            background-color: #FEF2F2;
+            color: var(--danger);
+        }
+
+        .btn-delete:hover {
+            background-color: #FEE2E2;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(100px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        /* Loader */
+        .loader {
+            display: none;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .file-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>MinIO Secure Cloud</h1>
+            <p>Microservice de stockage sécurisé avec métadonnées</p>
+        </header>
+
+        <!-- Upload Area -->
+        <div class="upload-card" id="dropZone">
+            <input type="file" id="fileInput" onchange="uploadFile()">
+            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <div class="upload-text">Glissez vos fichiers ici ou cliquez pour parcourir</div>
+            <div class="upload-subtext">Supporte tous types de fichiers</div>
+            <div class="loader" id="uploadLoader"></div>
+        </div>
+
+        <!-- Files List -->
+        <div class="files-header">
+            <h2>Fichiers Récents</h2>
+            <div style="font-size: 0.9rem; color: var(--text-secondary);" id="fileCount">0 fichiers</div>
+        </div>
+
+        <div class="file-grid" id="fileGrid">
+            <!-- Files will be injected here -->
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">Action effectuée</div>
+
+    <script>
+        const API_URL = "";
+
+        // Utilities
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function getFileIcon(type) {
+            if (type.startsWith('image/')) return 'fa-file-image';
+            if (type.startsWith('video/')) return 'fa-file-video';
+            if (type.startsWith('audio/')) return 'fa-file-audio';
+            if (type.includes('pdf')) return 'fa-file-pdf';
+            if (type.includes('word') || type.includes('document')) return 'fa-file-word';
+            return 'fa-file-alt'; // default
+        }
+
+        // API Calls
+        async function fetchFiles() {
+            try {
+                const response = await fetch(`${API_URL}/files`);
+                const files = await response.json();
+                renderFiles(files);
+            } catch (error) {
+                console.error("Error fetching files:", error);
+                showToast("Erreur de chargement", "error");
+            }
+        }
+
+        function renderFiles(files) {
+            const grid = document.getElementById('fileGrid');
+            const count = document.getElementById('fileCount');
+
+            count.textContent = `${files.length} fichier${files.length > 1 ? 's' : ''}`;
+            grid.innerHTML = '';
+
+            if (files.length === 0) {
+                grid.innerHTML = '<p style="text-align:center; width:100%; color: var(--text-secondary);">Aucun fichier trouvé.</p>';
+                return;
+            }
+
+            files.forEach(file => {
+                const card = document.createElement('div');
+                card.className = 'file-card';
+                card.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-icon">
+                            <i class="fas ${getFileIcon(file.content_type)}"></i>
+                        </div>
+                        <div class="file-details">
+                            <span class="file-name" title="${file.filename}">${file.filename}</span>
+                            <div class="file-meta">${formatBytes(file.size)} • ${new Date(file.upload_date).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <a href="${API_URL}/files/${file.id}" target="_blank" class="btn btn-download">
+                            <i class="fas fa-download"></i> Télécharger
+                        </a>
+                        <button onclick="deleteFile('${file.id}')" class="btn btn-delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const loader = document.getElementById('uploadLoader');
+
+            if (!file) return;
+
+            loader.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_URL}/files/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showToast("Fichier uploadé avec succès !");
+                    fetchFiles();
+                } else {
+                    showToast("Échec de l'upload.", "error");
+                }
+            } catch (e) {
+                showToast("Erreur: " + e, "error");
+            } finally {
+                loader.style.display = 'none';
+                fileInput.value = ''; // Reset input
+            }
+        }
+
+        async function deleteFile(id) {
+            if (!confirm("Voulez-vous vraiment supprimer ce fichier ?")) return;
+
+            try {
+                const response = await fetch(`${API_URL}/files/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    showToast("Fichier supprimé.");
+                    fetchFiles();
+                } else {
+                    showToast("Erreur de suppression.", "error");
+                }
+            } catch (e) {
+                showToast("Err: " + e, "error");
+            }
+        }
+
+        // Drag & Drop Visuals
+        const dropZone = document.getElementById('dropZone');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        // Initialize
+        fetchFiles();
+    </script>
+</body>
+
+</html>
