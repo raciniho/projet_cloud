@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlmodel
+minio
+asyncpg
+python-multipart
+psycopg2-binary
+jinja2
+python-dotenv
+pytest
+httpx
+pytest-asyncio
